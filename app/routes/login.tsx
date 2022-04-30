@@ -1,5 +1,6 @@
 import * as React from "react";
 import { json, redirect } from "@remix-run/node";
+import { useActionData } from "@remix-run/react";
 
 import { Layout } from "~/components/layout";
 import { FormField } from "~/components/formField";
@@ -78,13 +79,43 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 export default function Login() {
+  const actionData = useActionData();
+
   const [action, setAction] = React.useState<"login" | "register">("login");
   const [formData, setFormData] = React.useState({
-    email: "",
-    password: "",
-    firstName: "",
-    lastName: "",
+    email: actionData?.fields?.email || "",
+    password: actionData?.fields?.password || "",
+    firstName: actionData?.fields?.firstName || "",
+    lastName: actionData?.fields?.lastName || "",
   });
+
+  const firstLoad = React.useRef(true);
+  const [errors, setErrors] = React.useState(actionData?.errors || {});
+  const [formError, setFormError] = React.useState(actionData?.error || "");
+
+  React.useEffect(() => {
+    if (!firstLoad.current) {
+      const newState = {
+        email: "",
+        password: "",
+        firstName: "",
+        lastName: "",
+      };
+      setErrors(newState);
+      setFormError("");
+      setFormData(newState);
+    }
+  }, [action]);
+
+  React.useEffect(() => {
+    if (!firstLoad.current) {
+      setFormError("");
+    }
+  }, [formData]);
+
+  React.useEffect(() => {
+    firstLoad.current = false;
+  }, []);
 
   // Updates the form data when an input changes
   function handleInputChange(
@@ -114,11 +145,16 @@ export default function Login() {
         </p>
 
         <form method="post" className="rounded-2xl bg-gray-200 p-6 w-96">
+          <div className="text-xs font-semibold text-center tracking-wide text-red-500 w-full">
+            {formError}
+          </div>
+
           <FormField
             htmlFor="email"
             label="Email"
             value={formData.email}
             onChange={(e) => handleInputChange(e, "email")}
+            error={errors?.email}
           />
           <FormField
             htmlFor="password"
@@ -126,6 +162,7 @@ export default function Login() {
             label="Password"
             value={formData.password}
             onChange={(e) => handleInputChange(e, "password")}
+            error={errors?.password}
           />
           {action === "register" && (
             <>
@@ -134,12 +171,14 @@ export default function Login() {
                 label="First Name"
                 onChange={(e) => handleInputChange(e, "firstName")}
                 value={formData.firstName}
+                error={errors?.firstName}
               />
               <FormField
                 htmlFor="lastName"
                 label="Last Name"
                 onChange={(e) => handleInputChange(e, "lastName")}
                 value={formData.lastName}
+                error={errors?.lastName}
               />
             </>
           )}
