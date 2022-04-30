@@ -1,5 +1,5 @@
 import { json } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, Outlet } from "@remix-run/react";
 
 import { UserPanel } from "~/components/userPanel";
 import { Layout } from "~/components/layout";
@@ -19,6 +19,7 @@ export default function Home() {
 
   return (
     <Layout>
+      <Outlet />
       <div className="h-full flex">
         <UserPanel users={users} />
       </div>
