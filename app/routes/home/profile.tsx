@@ -1,6 +1,6 @@
 import * as React from "react";
 import { json, redirect } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, useActionData } from "@remix-run/react";
 
 import { Modal } from "~/components/modal";
 import { FormField } from "~/components/formField";
@@ -71,11 +71,28 @@ export const action: ActionFunction = async ({ request }) => {
 export default function ProfileSettings() {
   const { user } = useLoaderData();
 
+  const actionData = useActionData();
+  const [formError, setFormError] = React.useState(actionData?.error || "");
+  const firstLoad = React.useRef(true);
+
   const [formData, setFormData] = React.useState({
-    firstName: user?.profile?.firstName,
-    lastName: user?.profile?.lastName,
-    department: user?.profile?.department || "MARKETING",
+    firstName: actionData?.fields?.firstName || user?.profile?.firstName,
+    lastName: actionData?.fields?.lastName || user?.profile?.lastName,
+    department:
+      actionData?.fields?.department ||
+      user?.profile?.department ||
+      "MARKETING",
   });
+
+  React.useEffect(() => {
+    if (!firstLoad.current) {
+      setFormError("");
+    }
+  }, [formData]);
+
+  React.useEffect(() => {
+    firstLoad.current = false;
+  }, []);
 
   const handleInputChange = (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -91,6 +108,10 @@ export default function ProfileSettings() {
           Your Profile
         </h2>
 
+        <div className="text-xs font-semibold text-center tracking-wide text-red-500 w-full mb-2">
+          {formError}
+        </div>
+
         <div className="flex">
           <div className="flex-1">
             <form
@@ -104,12 +125,14 @@ export default function ProfileSettings() {
                 label="First Name"
                 value={formData.firstName}
                 onChange={(e) => handleInputChange(e, "firstName")}
+                error={actionData?.errors?.firstName}
               />
               <FormField
                 htmlFor="lastName"
                 label="Last Name"
                 value={formData.lastName}
                 onChange={(e) => handleInputChange(e, "lastName")}
+                error={actionData?.errors?.lastName}
               />
               <SelectBox
                 className="w-full rounded-xl px-3 py-2 text-gray-400"
