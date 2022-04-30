@@ -6,7 +6,7 @@ import { Layout } from "~/components/layout";
 import { SearchBar } from "~/components/searchBar";
 import { RecentBar } from "~/components/recentBar";
 import { Kudo } from "~/components/kudo";
-import { requireUserId } from "~/utils/auth.server";
+import { requireUserId, getUser } from "~/utils/auth.server";
 import { getOtherUsers } from "~/utils/user.server";
 import { getFilteredKudos, getRecentKudos } from "~/utils/kudo.server";
 
@@ -67,12 +67,13 @@ export const loader: LoaderFunction = async ({ request }) => {
 
   const kudos = await getFilteredKudos(userId, sortOptions, textFilter);
   const recentKudos = await getRecentKudos();
+  const user = await getUser(request);
 
-  return json({ users, kudos, recentKudos });
+  return json({ users, user, kudos, recentKudos });
 };
 
 export default function Home() {
-  const { users, kudos, recentKudos } = useLoaderData();
+  const { users, user, kudos, recentKudos } = useLoaderData();
 
   return (
     <Layout>
@@ -80,7 +81,7 @@ export default function Home() {
       <div className="h-full flex">
         <UserPanel users={users} />
         <div className="flex-1 flex flex-col">
-          <SearchBar />
+          <SearchBar profile={user.profile} />
           <div className="flex-1 flex">
             <div className="w-full p-10 flex flex-col gap-y-4">
               {kudos.map((kudo: KudoWithProfile) => (
